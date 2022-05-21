@@ -3,6 +3,8 @@ import os
 
 class Storage:
     def __init__(self, saving_dir):
+        if not os.path.exists(saving_dir):
+            os.mkdir(saving_dir)
         self.saving_dir = saving_dir
         self.storage = dict()
 

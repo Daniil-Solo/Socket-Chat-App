@@ -24,6 +24,9 @@ class Server:
         print("Сервер настроился!")
 
     def start(self):
+        """
+        Основной цикл обработки входящих сообщений
+        """
         print("Сервер запущен!")
         while True:
             data, client = self.socket.recvfrom(1024)
@@ -33,6 +36,9 @@ class Server:
             self.handle_new_message(msg, client)
 
     def handle_new_message(self, message: MsgInfo, client: tuple):
+        """
+        Обработка нового сообщения
+        """
         if message.type != 'h':
             if message.user not in self.clients:
                 self.clients[message.user] = client
@@ -46,10 +52,13 @@ class Server:
             threading.Thread(target=self.send_message, args=(message, )).start()
 
     def send_message(self, message: MsgInfo):
-        for username in [user for user in self.clients.keys()]:
+        """
+        Отправка сообщения всем клиентам чата
+        """
+        for username in [user for user in self.clients.keys() if user != message.user]:
             client = self.clients[username]
             limit = self.calculate_limit(username)
-            with open(self.msgs_of_client[message.user], 'rb') as f:
+            with open(self.msgs_of_client[message.user], 'rb') as f: # отправляем порционно файл сообщения
                 file_part = f.read(limit)
                 while file_part:
                     data = from_dict_to_bytes({
@@ -61,7 +70,7 @@ class Server:
                     self.socket.sendto(data, client)
                     time.sleep(0.1)
                     file_part = f.read(limit)
-            if message.type == 't':
+            if message.type == 't':             # для текста отправляем еще одно сообщение, обозначающее конец текста
                 data = from_dict_to_bytes({
                     'user': message.user,
                     'data': '',
@@ -69,7 +78,7 @@ class Server:
                     'type': 't'
                 })
                 self.socket.sendto(data, client)
-            else:
+            else:                           # для файла отправляем сообщение с именем файла, обозначающее конец файла
                 data = from_dict_to_bytes({
                     'user': message.user,
                     'data': message.data,
@@ -81,7 +90,12 @@ class Server:
         del self.msgs_of_client[message.user]
 
     @staticmethod
-    def calculate_limit(username):
+    def calculate_limit(username: str) -> int:
+        """
+        Подсчет максимальной длины контентной части,
+        исходя из имени пользователя
+        5 вычитается для надежности
+        """
         data = from_dict_to_bytes({
             'user': username,
             'data':  b"",

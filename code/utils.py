@@ -1,6 +1,7 @@
 import json
 from collections import namedtuple
 
+# структура сообщения
 msg_structure = {
     "user": "",
     "data": "",
@@ -11,6 +12,9 @@ MsgInfo = namedtuple('MsgInfo', msg_structure)
 
 
 def from_bytes_to_message(data: bytes) -> MsgInfo:
+    """
+    bytes -> json -> dict -> MsgInfo
+    """
     string_data = data.decode()
     json_data = json.loads(string_data)
     json_data['data'] = json_data['data'].encode()
@@ -20,6 +24,9 @@ def from_bytes_to_message(data: bytes) -> MsgInfo:
 
 
 def from_dict_to_bytes(data: dict) -> bytes:
+    """
+    dict -> json -> bytes
+    """
     if type(data['data']) is bytes:
         data['data'] = data['data'].decode()
     string_data = json.dumps(data)

@@ -8,6 +8,7 @@ from storage import Storage
 
 IP = ""
 PORT = 52531
+KEY_PHRASE = 'GIVE ME YOUR ADDRESS'
 SAVING_DIR = os.path.join(os.getcwd(), '../saves')
 BUF_SIZE = 1024
 TIMEOUT = 0.1
@@ -30,6 +31,10 @@ class Server:
         print("Сервер запущен!")
         while True:
             data, client = self.socket.recvfrom(1024)
+            if data.decode() == KEY_PHRASE:
+                print('Сервер отправил свой адрес клиенту: ', client)
+                self.socket.sendto(KEY_PHRASE.encode(), client)
+                continue
             time.sleep(TIMEOUT)
             msg = from_bytes_to_message(data)
             print('Сервер получил сообщение от', client, ": ", msg.data[:100], '...')
@@ -56,6 +61,7 @@ class Server:
         Отправка сообщения всем клиентам чата
         """
         for username in [user for user in self.clients.keys() if user != message.user]:
+            print(username)
             client = self.clients[username]
             limit = self.calculate_limit(username)
             with open(self.msgs_of_client[message.user], 'rb') as f: # отправляем порционно файл сообщения

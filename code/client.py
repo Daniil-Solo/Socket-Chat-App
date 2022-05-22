@@ -7,8 +7,9 @@ from utils import from_dict_to_bytes, from_bytes_to_message, MsgInfo
 from storage import Storage
 
 
-BUF_SIZE = 1024
 SERVER_PORT = 52531
+BUF_SIZE = 1024
+KEY_PHRASE = 'GIVE ME YOUR ADDRESS'
 SAVING_DIR = os.path.join(os.getcwd(), '../my_saves')
 
 
@@ -18,6 +19,7 @@ class Client:
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.socket.settimeout(0.1)
+        self.server_address = None
         self.msgs_of_client = Storage(SAVING_DIR)
         self.username = username
         self.limit = self.calculate_limit()
@@ -35,10 +37,25 @@ class Client:
         })
         return BUF_SIZE - len(data) - 5
 
+    def get_server_address(self):
+        """
+        Получение адреса сервера
+        """
+        self.socket.sendto(KEY_PHRASE.encode(), ('<broadcast>', SERVER_PORT))
+        while True:
+            try:
+                data, server = self.socket.recvfrom(BUF_SIZE)
+                if data:
+                    self.server_address = server
+                    break
+            except socket.timeout:
+                continue
+
     def start(self):
         """
         Запуск цикла обработки сообщений
         """
+        self.get_server_address()
         threading.Thread(target=self.loop).start()
 
     def loop(self):
@@ -97,7 +114,7 @@ class Client:
                 'type': 't'
             })
             i += self.limit
-            self.socket.sendto(data, ('<broadcast>', SERVER_PORT))
+            self.socket.sendto(data, self.server_address)
             time.sleep(0.1)
 
     def send_file(self, filepath: str):
@@ -113,7 +130,7 @@ class Client:
                     'is_end': 0,
                     'type': 'f'
                 })
-                self.socket.sendto(data, ('<broadcast>', SERVER_PORT))
+                self.socket.sendto(data, self.server_address)
                 file_part = f.read(self.limit)
         data = from_dict_to_bytes({
             'user': self.username,
@@ -121,7 +138,7 @@ class Client:
             'is_end': 1,
             'type': 'h'
         })
-        self.socket.sendto(data, ('<broadcast>', SERVER_PORT))
+        self.socket.sendto(data, self.server_address)
 
 
 if __name__ == "__main__":

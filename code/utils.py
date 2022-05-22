@@ -2,6 +2,8 @@ import json
 from collections import namedtuple
 
 # структура сообщения
+from code.configs import BUF_SIZE
+
 msg_structure = {
     "user": "",
     "data": "",
@@ -35,3 +37,16 @@ def from_dict_to_bytes(data: dict) -> bytes:
     string_data = json.dumps(data)
     byte_data = string_data.encode()
     return byte_data
+
+
+def calculate_limit(username: str) -> int:
+    """
+    Подсчет максимальной длины контентной части исходя из имени пользователя
+    """
+    data = from_dict_to_bytes({
+        'user': username,
+        'data':  b"",
+        'is_end': 1,
+        'type': "t"
+    })
+    return int((BUF_SIZE - len(data)) / 2.05)

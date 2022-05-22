@@ -31,14 +31,14 @@ class Server:
         print("Сервер запущен!")
         while True:
             data, client = self.socket.recvfrom(BUF_SIZE)
-            print(len(data))
             if data.decode() == KEY_PHRASE:
                 print('Сервер отправил свой адрес клиенту: ', client)
                 self.socket.sendto(KEY_PHRASE.encode(), client)
                 continue
             time.sleep(TIMEOUT)
             msg = from_bytes_to_message(data)
-            print('Сервер получил сообщение от', client, ": ", msg.data[:100], '...')
+            print('Сервер получил сообщение от', client, ": ",
+                  msg.data[:100] + b'...' if len(msg.data) > 100 else msg.data[:100])
             self.handle_new_message(msg, client)
 
     def handle_new_message(self, message: MsgInfo, client: tuple):
@@ -64,7 +64,7 @@ class Server:
         for username in [user for user in self.clients.keys() if user != message.user]:
             client = self.clients[username]
             limit = self.calculate_limit(username)
-            with open(self.msgs_of_client[message.user], 'rb') as f: # отправляем порционно файл сообщения
+            with open(self.msgs_of_client[message.user], 'rb') as f:  # отправляем порционно файл сообщения
                 file_part = f.read(limit)
                 while file_part:
                     data = from_dict_to_bytes({

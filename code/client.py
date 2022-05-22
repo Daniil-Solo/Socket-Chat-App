@@ -97,9 +97,8 @@ class Client:
                     bin_string = f.read(BUF_SIZE)
         elif message.type == 'h':
             filepath = self.msgs_of_client[message.user]
-            print(message.data)
             os.rename(filepath, os.path.join(SAVING_DIR, message.data.decode()))
-            print("Файл", message.data)
+            print("Файл", message.data.decode())
         del self.msgs_of_client[message.user]
 
     def send_text(self, text: str):
@@ -124,8 +123,8 @@ class Client:
         """
         with open(filepath, 'rb') as f:
             file_part = f.read(self.limit)
-            print('limit', self.limit)
-            print('filepart', len(file_part))
+            # print('limit', self.limit)
+            # print('filepart', len(file_part))
             while file_part:
                 data = from_dict_to_bytes({
                     'user': self.username,
@@ -133,19 +132,8 @@ class Client:
                     'is_end': 0,
                     'type': 'f'
                 })
-                print({
-                    'user': self.username,
-                    'data': file_part,
-                    'is_end': 0,
-                    'type': 'f'
-                })
-                print('dict', len(str({
-                    'user': self.username,
-                    'data': file_part,
-                    'is_end': 0,
-                    'type': 'f'
-                })))
-                print('data', len(data))
+                # print('dict', data)
+                # print('data', len(data))
                 self.socket.sendto(data, self.server_address)
                 file_part = f.read(self.limit)
         data = from_dict_to_bytes({
@@ -154,12 +142,12 @@ class Client:
             'is_end': 1,
             'type': 'h'
         })
-        print('end', {
-            'user': self.username,
-            'data': os.path.basename(filepath),
-            'is_end': 1,
-            'type': 'h'
-        })
+        # print('end', {
+        #     'user': self.username,
+        #     'data': os.path.basename(filepath),
+        #     'is_end': 1,
+        #     'type': 'h'
+        # })
         self.socket.sendto(data, self.server_address)
 
 

@@ -22,7 +22,11 @@ class Client:
         self.username = username
         self.limit = self.calculate_limit()
 
-    def calculate_limit(self):
+    def calculate_limit(self) -> int:
+        """
+        Подсчет максимальной длины контентной части
+        5 вычитается для надежности
+        """
         data = from_dict_to_bytes({
             'user': self.username,
             'data':  "",
@@ -32,9 +36,15 @@ class Client:
         return BUF_SIZE - len(data) - 5
 
     def start(self):
+        """
+        Запуск цикла обработки сообщений
+        """
         threading.Thread(target=self.loop).start()
 
     def loop(self):
+        """
+        Цикл обработки сообщений
+        """
         while True:
             try:
                 data, server = self.socket.recvfrom(BUF_SIZE)
@@ -44,6 +54,9 @@ class Client:
             self.handle_new_message(msg)
 
     def handle_new_message(self, message: MsgInfo):
+        """
+        Обработка нового сообщения
+        """
         if message.type != 'h':
             if message.user not in self.msgs_of_client:
                 self.msgs_of_client[message.user] = message.data
@@ -54,6 +67,9 @@ class Client:
             self.print_message(message)
 
     def print_message(self, message: MsgInfo):
+        """
+        Печать целого сообщения в чат клиента
+        """
         print(message.user, ":")
         if message.type == 't':
             with open(self.msgs_of_client[message.user], 'rb') as f:
@@ -69,6 +85,9 @@ class Client:
         del self.msgs_of_client[message.user]
 
     def send_text(self, text: str):
+        """
+        Отправка текстового сообщения
+        """
         i = 0
         while i <= len(text):
             data = from_dict_to_bytes({
@@ -82,6 +101,9 @@ class Client:
             time.sleep(0.1)
 
     def send_file(self, filepath: str):
+        """
+        Отправка файла
+        """
         with open(filepath, 'rb') as f:
             file_part = f.read(self.limit)
             while file_part:

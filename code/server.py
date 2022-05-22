@@ -30,7 +30,8 @@ class Server:
         """
         print("Сервер запущен!")
         while True:
-            data, client = self.socket.recvfrom(1024)
+            data, client = self.socket.recvfrom(BUF_SIZE)
+            print(len(data))
             if data.decode() == KEY_PHRASE:
                 print('Сервер отправил свой адрес клиенту: ', client)
                 self.socket.sendto(KEY_PHRASE.encode(), client)
@@ -61,7 +62,6 @@ class Server:
         Отправка сообщения всем клиентам чата
         """
         for username in [user for user in self.clients.keys() if user != message.user]:
-            print(username)
             client = self.clients[username]
             limit = self.calculate_limit(username)
             with open(self.msgs_of_client[message.user], 'rb') as f: # отправляем порционно файл сообщения
@@ -108,7 +108,7 @@ class Server:
             'is_end': 1,
             'type': "t"
         })
-        return BUF_SIZE - len(data) - 5
+        return (BUF_SIZE - len(data) - 5) // 5
 
 
 if __name__ == "__main__":

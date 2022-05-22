@@ -3,9 +3,9 @@ import socket
 import threading
 import time
 
-from utils import from_dict_to_bytes, from_bytes_to_message, MsgInfo, calculate_limit
-from storage import Storage
-from configs import BUF_SIZE, KEY_PHRASE, SERVER_PORT, TIMEOUT
+from code.utils import from_dict_to_bytes, from_bytes_to_message, MsgInfo, calculate_limit
+from code.storage import Storage
+from code.configs import BUF_SIZE, KEY_PHRASE, SERVER_PORT, TIMEOUT
 
 
 SAVING_DIR = os.path.join(os.getcwd(), '../my_saves')
@@ -28,13 +28,10 @@ class Client:
         """
         self.socket.sendto(KEY_PHRASE.encode(), ('<broadcast>', SERVER_PORT))
         while True:
-            try:
-                data, server = self.socket.recvfrom(BUF_SIZE)
-                if data:
-                    self.server_address = server
-                    break
-            except socket.timeout:
-                continue
+            data, server = self.socket.recvfrom(BUF_SIZE)
+            if data:
+                self.server_address = server
+                break
 
     def start(self):
         """

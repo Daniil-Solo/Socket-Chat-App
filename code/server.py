@@ -3,9 +3,9 @@ import socket
 import threading
 import time
 
-from utils import from_bytes_to_message, from_dict_to_bytes, MsgInfo, calculate_limit
-from storage import Storage
-from configs import BUF_SIZE, KEY_PHRASE, SERVER_PORT as PORT, TIMEOUT
+from code.utils import from_bytes_to_message, from_dict_to_bytes, MsgInfo, calculate_limit
+from code.storage import Storage
+from code.configs import BUF_SIZE, KEY_PHRASE, SERVER_PORT as PORT, TIMEOUT
 
 IP = ""
 SAVING_DIR = os.path.join(os.getcwd(), '../saves')

@@ -3,13 +3,11 @@ import socket
 import threading
 import time
 
-from utils import from_dict_to_bytes, from_bytes_to_message, MsgInfo
+from utils import from_dict_to_bytes, from_bytes_to_message, MsgInfo, calculate_limit
 from storage import Storage
+from configs import BUF_SIZE, KEY_PHRASE, SERVER_PORT, TIMEOUT
 
 
-SERVER_PORT = 52531
-BUF_SIZE = 1024
-KEY_PHRASE = 'GIVE ME YOUR ADDRESS'
 SAVING_DIR = os.path.join(os.getcwd(), '../my_saves')
 
 
@@ -22,20 +20,7 @@ class Client:
         self.server_address = None
         self.msgs_of_client = Storage(SAVING_DIR)
         self.username = username
-        self.limit = self.calculate_limit()
-
-    def calculate_limit(self) -> int:
-        """
-        Подсчет максимальной длины контентной части
-        5 вычитается для надежности
-        """
-        data = from_dict_to_bytes({
-            'user': self.username,
-            'data':  "",
-            'is_end': 1,
-            'type': "t"
-        })
-        return (BUF_SIZE - len(data) - 5) // 5
+        self.limit = calculate_limit(self.username)
 
     def get_server_address(self):
         """
@@ -135,6 +120,7 @@ class Client:
                 # print('dict', data)
                 # print('data', len(data))
                 self.socket.sendto(data, self.server_address)
+                time.sleep(TIMEOUT)
                 file_part = f.read(self.limit)
         data = from_dict_to_bytes({
             'user': self.username,
@@ -142,12 +128,7 @@ class Client:
             'is_end': 1,
             'type': 'h'
         })
-        # print('end', {
-        #     'user': self.username,
-        #     'data': os.path.basename(filepath),
-        #     'is_end': 1,
-        #     'type': 'h'
-        # })
+        # print('end', data)
         self.socket.sendto(data, self.server_address)
 
 

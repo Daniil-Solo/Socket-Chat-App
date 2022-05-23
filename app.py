@@ -43,9 +43,15 @@ class ChatApp(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.file_lbl.setText(self.NO_FILE)
 
     def add_file(self):
-        self.file_path = QtWidgets.QFileDialog.getOpenFileName(self, "Выберите файл для передачи")[0]
+        self.file_path = QtWidgets.QFileDialog.getOpenFileName(self, "Выберите файл для передачи")[0] or None
         self.message_tb.clear()
-        self.file_lbl.setText(self.ADD_FILE_1 + os.path.basename(self.file_path) + self.ADD_FILE_2)
+        if self.file_path:
+            filename = os.path.basename(self.file_path)
+            if len(filename) > 40:
+                filename = filename[:40] + ".." + filename[-3:]
+            self.file_lbl.setText(self.ADD_FILE_1 + filename + self.ADD_FILE_2)
+        else:
+            self.file_lbl.setText(self.NO_FILE)
 
     def remove_file(self):
         self.file_path = None

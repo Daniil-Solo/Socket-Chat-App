@@ -1,15 +1,66 @@
 import os
 import socket
 import sys
+import threading
 
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox, QInputDialog, QLineEdit
 
-import interface.design as design
+import interface.main_window as main_window
+import interface.login_window as login_window
+import interface.progress_window as progress_window
 from code.client import Client
 
 
-class ChatApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
+class ProgressWidget(QtWidgets.QWidget, progress_window.Ui_Form):
+    def __init__(self, parent, file_path, client):
+        super().__init__()
+        self.setupUi(self)
+        self.chat = parent
+        self.file_path = file_path
+        self.client = client
+        self.cancel_loading_btn.clicked.connect(self.cancel_loading)
+        threading.Thread(target=self.progress_sending).start()
+
+    def progress_sending(self):
+        self.client.send_file(self.file_path)
+        self.chat.show()
+        self.chat.finish_file_sending()
+        self.close()
+
+    def cancel_loading(self):
+        pass
+
+
+class LoginDialog(QtWidgets.QDialog, login_window.Ui_Dialog):
+    def __init__(self):
+        super().__init__()
+        self.chat = None
+        self.setupUi(self)
+        self.login_btn.clicked.connect(self.connect)
+
+    def connect(self):
+        login = self.login_tb.text()
+        if login != '':
+            client = Client(login)
+            try:
+                client.start()
+                self.hide()
+                self.chat = ChatApp(client)
+                self.chat.show()
+            except socket.error:
+                QMessageBox.about(self, "Ошибка", "Не удалось подключиться!")
+            finally:
+                client.connected = False
+
+
+class ChatApp(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
+    ADD_FILE_1 = '<html><head/><body><p align="center">Прикреплен файл '
+    ADD_FILE_2 = '</p></body></html>'
+    NO_FILE = """
+        <html><head/><body><p align="center">Нет прикрепленного файла</p></body></html>
+    """
+
     def __init__(self, client):
         super().__init__()
         self.setupUi(self)
@@ -17,41 +68,37 @@ class ChatApp(QtWidgets.QMainWindow, design.Ui_MainWindow):
         self.file_path = None
         self.send_msg_btn.clicked.connect(self.send_message)
         self.add_file_btn.clicked.connect(self.add_file)
+        self.remove_file_btn.clicked.connect(self.remove_file)
+        self.progress_widget = None
 
     def send_message(self):
         if self.file_path:
-            self.client.send_file(self.file_path)
+            self.hide()
+            self.progress_widget = ProgressWidget(self, self.file_path, self.client)
+            self.progress_widget.show()
         else:
             text = self.message_tb.text()
             self.client.send_text(text)
+            self.message_tb.clear()
+
+    def finish_file_sending(self):
         self.file_path = None
-        self.message_tb.setText('')
-        self.label_3.setText('')
+        self.message_tb.clear()
+        self.file_lbl.setText(self.NO_FILE)
 
     def add_file(self):
         self.file_path = QtWidgets.QFileDialog.getOpenFileName(self, "Выберите файл для передачи")[0]
         self.message_tb.clear()
-        self.label_3.setText('прикреплен файл ' + os.path.basename(self.file_path))
+        self.file_lbl.setText(self.ADD_FILE_1 + os.path.basename(self.file_path) + self.ADD_FILE_2)
 
-
-def main():
-    app = QtWidgets.QApplication([])
-    window1 = QtWidgets.QWidget()
-    username, ok_pressed = QInputDialog.getText(window1, "Подключение к чату", "Пожалуйста введите ваш логин:")
-    if ok_pressed and username:
-        client = Client(username)
-        try:
-            client.start()
-            window = ChatApp(client=client)
-            window.show()
-            sys.exit(app.exec())
-        except socket.error:
-            QMessageBox.about(window1, "Ошибка", "Не удалось подключиться!")
-        finally:
-            client.connected = False
-    else:
-        sys.exit(0)
+    def remove_file(self):
+        self.file_path = None
+        self.message_tb.clear()
+        self.file_lbl.setText(self.NO_FILE)
 
 
 if __name__ == '__main__':
-    main()
+    app = QtWidgets.QApplication([])
+    dialog = LoginDialog()
+    dialog.show()
+    sys.exit(app.exec())

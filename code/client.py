@@ -105,6 +105,7 @@ class Client:
         Отправка файла
         """
         file_size = os.path.getsize(filepath)
+        add_part_size = self.__limit / file_size * 100
         sent_size = 0
         with open(filepath, 'rb') as f:
             file_part = f.read(self.__limit)
@@ -118,8 +119,8 @@ class Client:
                 self.__socket.sendto(data, self.__server_address)
                 time.sleep(TIMEOUT)
                 file_part = f.read(self.__limit)
-                sent_size += len(data)
-                progressbar.setValue(int(sent_size / file_size * 100))
+                sent_size += add_part_size
+                progressbar.setValue(int(sent_size))
         data = from_dict_to_bytes({
             'user': self.__username,
             'data': os.path.basename(filepath),
@@ -127,4 +128,3 @@ class Client:
             'type': 'h'
         })
         self.__socket.sendto(data, self.__server_address)
-        progressbar.setValue(100)

@@ -108,8 +108,6 @@ class Client:
         sent_size = 0
         with open(filepath, 'rb') as f:
             file_part = f.read(self.__limit)
-            # print('limit', self.limit)
-            # print('filepart', len(file_part))
             while file_part:
                 data = from_dict_to_bytes({
                     'user': self.__username,
@@ -117,18 +115,16 @@ class Client:
                     'is_end': 0,
                     'type': 'f'
                 })
-                # print('dict', data)
-                # print('data', len(data))
-                sent_size += len(data)
-                progressbar.setValue(int(sent_size/file_size*100))
                 self.__socket.sendto(data, self.__server_address)
                 time.sleep(TIMEOUT)
                 file_part = f.read(self.__limit)
+                sent_size += len(data)
+                progressbar.setValue(int(sent_size / file_size * 100))
         data = from_dict_to_bytes({
             'user': self.__username,
             'data': os.path.basename(filepath),
             'is_end': 1,
             'type': 'h'
         })
-        # print('end', data)
         self.__socket.sendto(data, self.__server_address)
+        progressbar.setValue(100)

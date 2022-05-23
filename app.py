@@ -12,54 +12,10 @@ import interface.progress_window as progress_window
 from code.client import Client
 
 
-class ProgressWidget(QtWidgets.QWidget, progress_window.Ui_Form):
-    def __init__(self, parent, file_path, client):
-        super().__init__()
-        self.setupUi(self)
-        self.chat = parent
-        self.file_path = file_path
-        self.client = client
-        self.cancel_loading_btn.clicked.connect(self.cancel_loading)
-        threading.Thread(target=self.progress_sending).start()
-
-    def progress_sending(self):
-        self.client.send_file(self.file_path)
-        self.chat.show()
-        self.chat.finish_file_sending()
-        self.close()
-
-    def cancel_loading(self):
-        pass
-
-
-class LoginDialog(QtWidgets.QDialog, login_window.Ui_Dialog):
-    def __init__(self):
-        super().__init__()
-        self.chat = None
-        self.setupUi(self)
-        self.login_btn.clicked.connect(self.connect)
-
-    def connect(self):
-        login = self.login_tb.text()
-        if login != '':
-            client = Client(login)
-            try:
-                client.start()
-                self.hide()
-                self.chat = ChatApp(client)
-                self.chat.show()
-            except socket.error:
-                QMessageBox.about(self, "Ошибка", "Не удалось подключиться!")
-            finally:
-                client.connected = False
-
-
 class ChatApp(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
     ADD_FILE_1 = '<html><head/><body><p align="center">Прикреплен файл '
     ADD_FILE_2 = '</p></body></html>'
-    NO_FILE = """
-        <html><head/><body><p align="center">Нет прикрепленного файла</p></body></html>
-    """
+    NO_FILE = "<html><head/><body><p align=\"center\">Нет прикрепленного файла</p></body></html>"
 
     def __init__(self, client):
         super().__init__()
@@ -95,6 +51,49 @@ class ChatApp(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.file_path = None
         self.message_tb.clear()
         self.file_lbl.setText(self.NO_FILE)
+
+
+class ProgressWidget(QtWidgets.QWidget, progress_window.Ui_Form):
+    def __init__(self, parent: ChatApp, file_path: str, client: Client):
+        super().__init__()
+        self.setupUi(self)
+        self.chat = parent
+        self.file_path = file_path
+        self.client = client
+        self.cancel_loading_btn.clicked.connect(self.cancel_loading)
+        threading.Thread(target=self.progress_sending).start()
+
+    def progress_sending(self):
+        self.progress.setValue(0)
+        self.client.send_file(self.file_path, self.progress)
+        self.chat.show()
+        self.chat.finish_file_sending()
+        self.close()
+
+    def cancel_loading(self):
+        pass
+
+
+class LoginDialog(QtWidgets.QDialog, login_window.Ui_Dialog):
+    def __init__(self):
+        super().__init__()
+        self.chat = None
+        self.setupUi(self)
+        self.login_btn.clicked.connect(self.connect)
+
+    def connect(self):
+        login = self.login_tb.text()
+        if login != '':
+            client = Client(login)
+            try:
+                client.start()
+                self.hide()
+                self.chat = ChatApp(client)
+                self.chat.show()
+            except socket.error:
+                QMessageBox.about(self, "Ошибка", "Не удалось подключиться!")
+            finally:
+                client.connected = False
 
 
 if __name__ == '__main__':

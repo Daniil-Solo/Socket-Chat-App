@@ -100,10 +100,12 @@ class Client:
             self.__socket.sendto(data, self.__server_address)
             time.sleep(TIMEOUT)
 
-    def send_file(self, filepath: str):
+    def send_file(self, filepath: str, progressbar):
         """
         Отправка файла
         """
+        file_size = os.path.getsize(filepath)
+        sent_size = 0
         with open(filepath, 'rb') as f:
             file_part = f.read(self.__limit)
             # print('limit', self.limit)
@@ -117,6 +119,8 @@ class Client:
                 })
                 # print('dict', data)
                 # print('data', len(data))
+                sent_size += len(data)
+                progressbar.setValue(int(sent_size/file_size*100))
                 self.__socket.sendto(data, self.__server_address)
                 time.sleep(TIMEOUT)
                 file_part = f.read(self.__limit)

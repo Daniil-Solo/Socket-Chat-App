@@ -8,7 +8,7 @@ from code.storage import Storage
 from code.configs import BUF_SIZE, KEY_PHRASE, SERVER_PORT, TIMEOUT
 
 
-SAVING_DIR = os.path.join(os.getcwd(), '../my_saves')
+SAVING_DIR = os.path.join(os.getcwd(), './my_saves')
 
 
 class Client:

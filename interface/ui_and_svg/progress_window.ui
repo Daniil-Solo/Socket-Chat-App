@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>322</width>
+    <height>126</height>
+   </rect>
+  </property>
+  <property name="cursor">
+   <cursorShape>WaitCursor</cursorShape>
+  </property>
+  <property name="windowTitle">
+   <string>Отправка файла</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="label_3">
+     <property name="minimumSize">
+      <size>
+       <width>300</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <family>MS Shell Dlg 2</family>
+       <pointsize>10</pointsize>
+       <weight>50</weight>
+       <italic>false</italic>
+       <bold>false</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">font: 10pt &quot;Sitka&quot;;
+font: 10pt &quot;MS Shell Dlg 2&quot;;
+color: rgb(44, 102, 110)</string>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;Загрузка файла&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QProgressBar" name="progress">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QProgressBar{
+    background-color: rgba(255, 255, 255, 255);
+	color: rgb(7, 57, 60);
+    border-radius: 10px;
+	border-style: solid; 
+	text-align: center;
+}
+QProgressBar::chunk{
+    border-radius: 10px;
+    background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgb(99, 185, 149), stop:1 rgb(213, 255, 222));
+}</string>
+     </property>
+     <property name="value">
+      <number>24</number>
+     </property>
+    </widget>
+   </item>
+   <item alignment="Qt::AlignHCenter">
+    <widget class="QPushButton" name="cancel_loading_btn">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>100</width>
+       <height>30</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>100</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="focusPolicy">
+      <enum>Qt::StrongFocus</enum>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(194, 232, 202);
+border: none;
+outline: none;
+border-radius: 10px;
+font: 8pt &quot;Sitka&quot;;
+font: 8pt &quot;MS Shell Dlg 2&quot;;
+color: rgb(44, 102, 110)
+
+</string>
+     </property>
+     <property name="text">
+      <string>Отмена</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

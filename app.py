@@ -22,6 +22,7 @@ class ChatApp(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.setupUi(self)
         self.client = client
         self.file_path = None
+        self.filename = ''
         self.send_msg_btn.clicked.connect(self.send_message)
         self.add_file_btn.clicked.connect(self.add_file)
         self.remove_file_btn.clicked.connect(self.remove_file)
@@ -29,6 +30,7 @@ class ChatApp(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
 
     def send_message(self):
         if self.file_path:
+            self.chat_tb.appendPlainText('Вы отправили файл: ' + self.filename)
             self.hide()
             self.progress_widget = ProgressWidget(self, self.file_path, self.client)
             self.progress_widget.show()
@@ -36,6 +38,7 @@ class ChatApp(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             text = self.message_tb.text()
             self.client.send_text(text)
             self.message_tb.clear()
+            self.chat_tb.appendPlainText('Вы: ' + text)
 
     def finish_file_sending(self):
         self.file_path = None
@@ -46,10 +49,10 @@ class ChatApp(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.file_path = QtWidgets.QFileDialog.getOpenFileName(self, "Выберите файл для передачи")[0] or None
         self.message_tb.clear()
         if self.file_path:
-            filename = os.path.basename(self.file_path)
-            if len(filename) > 40:
-                filename = filename[:40] + ".." + filename[-3:]
-            self.file_lbl.setText(self.ADD_FILE_1 + filename + self.ADD_FILE_2)
+            self.filename = os.path.basename(self.file_path)
+            if len(self.filename) > 50:
+                self.filename = self.filename[:40] + ".." + self.filename[-3:]
+            self.file_lbl.setText(self.ADD_FILE_1 + self.filename + self.ADD_FILE_2)
         else:
             self.file_lbl.setText(self.NO_FILE)
 

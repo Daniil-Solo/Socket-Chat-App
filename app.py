@@ -3,7 +3,7 @@ import socket
 import sys
 import threading
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QMessageBox, QInputDialog, QLineEdit
 
 import interface.main_window as main_window
@@ -21,6 +21,7 @@ class ChatApp(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.client = client
+        self.client.set_text_field(self.chat_tb)
         self.file_path = None
         self.filename = ''
         self.send_msg_btn.clicked.connect(self.send_message)
@@ -60,6 +61,10 @@ class ChatApp(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.file_path = None
         self.message_tb.clear()
         self.file_lbl.setText(self.NO_FILE)
+
+    def closeEvent(self, event: QtGui.QCloseEvent) -> None:
+        self.client.connected = False
+        event.accept()
 
 
 class ProgressWidget(QtWidgets.QWidget, progress_window.Ui_Form):
@@ -101,7 +106,6 @@ class LoginDialog(QtWidgets.QDialog, login_window.Ui_Dialog):
                 self.chat.show()
             except socket.error:
                 QMessageBox.about(self, "Ошибка", "Не удалось подключиться!")
-            finally:
                 client.connected = False
 
 

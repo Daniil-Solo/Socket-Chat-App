@@ -22,6 +22,7 @@ class Client:
         self.__username = username
         self.__limit = calculate_limit(self.__username)
         self.connected = True
+        self.__text_field = None
 
     def __get_server_address(self):
         """
@@ -53,6 +54,9 @@ class Client:
             msg = from_bytes_to_message(data)
             self.__handle_new_message(msg)
 
+    def set_text_field(self, text_field):
+        self.__text_field = text_field
+
     def __handle_new_message(self, message: MsgInfo):
         """
         Обработка нового сообщения
@@ -63,25 +67,26 @@ class Client:
             else:
                 self.__msgs_of_client.add(message.user, message.data)
 
-        if message.is_end:
+        if message.is_end and self.__text_field:
             self.print_message(message)
 
     def print_message(self, message: MsgInfo):
         """
         Печать целого сообщения в чат клиента
         """
-        print(message.user, ":")
+        text = message.user + ": "
         if message.type == 't':
             with open(self.__msgs_of_client[message.user], 'rb') as f:
                 bin_string = f.read(BUF_SIZE)
                 while bin_string:
                     text_string = bin_string.decode()
-                    print(text_string)
+                    text += text_string
                     bin_string = f.read(BUF_SIZE)
         elif message.type == 'h':
             filepath = self.__msgs_of_client[message.user]
             os.rename(filepath, os.path.join(SAVING_DIR, message.data.decode()))
-            print("Файл", message.data.decode())
+            text += "файл " + message.data.decode()
+        self.__text_field.appendPlainText(text)
         del self.__msgs_of_client[message.user]
 
     def send_text(self, text: str):

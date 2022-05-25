@@ -25,17 +25,22 @@ class Server:
         """
         Основной цикл обработки входящих сообщений
         """
+        data, client = None, None
         print("Сервер запущен!")
         while True:
-            data, client = self.socket.recvfrom(BUF_SIZE)
-            if data.decode() == KEY_PHRASE:
-                print('Сервер отправил свой адрес клиенту: ', client)
-                self.socket.sendto(KEY_PHRASE.encode(), client)
-                continue
-            time.sleep(TIMEOUT)
-            msg = from_bytes_to_message(data)
-            print('Сервер получил сообщение от', client, f'({msg.user})', ": ", msg.data[:5], msg.type, msg.is_end)
-            self.handle_new_message(msg, client)
+            try:
+                data, client = self.socket.recvfrom(BUF_SIZE)
+            except socket.error:
+                pass
+            else:
+                if data[: len(KEY_PHRASE)].decode() == KEY_PHRASE:
+                    print('Сервер отправил свой адрес клиенту: ', client)
+                    self.socket.sendto(KEY_PHRASE.encode(), client)
+                    continue
+                time.sleep(TIMEOUT)
+                msg = from_bytes_to_message(data)
+                print('Сервер получил сообщение от', client, f'({msg.user})', ": ", msg.data[:5], msg.type, msg.is_end)
+                self.handle_new_message(msg, client)
 
     def handle_new_message(self, message: MsgInfo, client: tuple):
         """
@@ -79,7 +84,6 @@ class Server:
                     'is_end': 1,
                     'type': 't'
                 })
-                self.socket.sendto(data, client)
             else:                           # для файла отправляем сообщение с именем файла, обозначающее конец файла
                 data = from_dict_to_bytes({
                     'user': message.user,
@@ -87,7 +91,7 @@ class Server:
                     'is_end': 1,
                     'type': 'h'
                 })
-                self.socket.sendto(data, client)
+            self.socket.sendto(data, client)
             print("Сервер отправил сообщение клиенту ", client, f'({username})')
         del self.msgs_of_client[message.user]
 

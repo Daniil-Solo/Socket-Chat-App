@@ -53,6 +53,7 @@ class Client:
                 continue
             msg = from_bytes_to_message(data)
             self.__handle_new_message(msg)
+        self.__socket.close()
 
     def set_text_field(self, text_field):
         self.__text_field = text_field

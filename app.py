@@ -4,12 +4,35 @@ import sys
 import threading
 
 from PyQt5 import QtWidgets, QtGui
-from PyQt5.QtWidgets import QMessageBox, QInputDialog, QLineEdit
+from PyQt5.QtCore import QThread, QTimer
+from PyQt5.QtWidgets import QMessageBox
 
 import interface.main_window as main_window
 import interface.login_window as login_window
 import interface.progress_window as progress_window
 from code.client import Client
+from code.configs import BUF_SIZE
+from code.utils import from_bytes_to_message
+
+
+class ClientThread(QThread):
+    data = {
+        'status': 'ok',
+        'text': ""
+    }
+
+    def __init__(self, parent):
+        super(ClientThread, self).__init__()
+        self.client = parent.client
+
+    def run(self):
+        try:
+            self.client.get_server_address()
+        except socket.error:
+            self.data['status'] = 'error'
+            return
+        self.client.set_data(self.data)
+        self.client.loop()
 
 
 class ChatApp(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
@@ -21,13 +44,17 @@ class ChatApp(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.client = client
-        self.client.set_text_field(self.chat_tb)
         self.file_path = None
         self.filename = ''
         self.send_msg_btn.clicked.connect(self.send_message)
         self.add_file_btn.clicked.connect(self.add_file)
         self.remove_file_btn.clicked.connect(self.remove_file)
         self.progress_widget = None
+        self.client_thread = ClientThread(self)
+        self.client_thread.start()
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.set_data)
+        self.timer.start(500)
 
     def send_message(self):
         if self.file_path:
@@ -61,6 +88,15 @@ class ChatApp(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         self.file_path = None
         self.message_tb.clear()
         self.file_lbl.setText(self.NO_FILE)
+
+    def set_data(self):
+        if self.client_thread.data.get('status') == 'error':
+            QMessageBox.about(self, "Ошибка", "Не удалось подключиться!")
+            self.close()
+        else:
+            text = self.client_thread.data.get('text')
+            self.client_thread.data['text'] = ''
+            self.chat_tb.appendPlainText(text)
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         self.client.connected = False
@@ -99,14 +135,9 @@ class LoginDialog(QtWidgets.QDialog, login_window.Ui_Dialog):
         login = self.login_tb.text()
         if login != '':
             client = Client(login)
-            try:
-                client.start()
-                self.hide()
-                self.chat = ChatApp(client)
-                self.chat.show()
-            except socket.error:
-                QMessageBox.about(self, "Ошибка", "Не удалось подключиться!")
-                client.connected = False
+            self.hide()
+            self.chat = ChatApp(client)
+            self.chat.show()
 
 
 if __name__ == '__main__':

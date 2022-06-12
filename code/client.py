@@ -17,14 +17,14 @@ class Client:
         self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.__socket.settimeout(0.1)
-        self.__server_address = None
+        self.server_address = None
         self.__msgs_of_client = Storage(SAVING_DIR)
         self.__username = username
         self.__limit = calculate_limit(self.__username)
         self.connected = True
-        self.__text_field = None
+        self.data = None
 
-    def __get_server_address(self):
+    def get_server_address(self):
         """
         Получение адреса сервера
         """
@@ -32,17 +32,13 @@ class Client:
         while True:
             data, server = self.__socket.recvfrom(BUF_SIZE)
             if data:
-                self.__server_address = server
+                self.server_address = server
                 break
 
-    def start(self):
-        """
-        Запуск цикла обработки сообщений
-        """
-        self.__get_server_address()
-        threading.Thread(target=self.__loop).start()
+    def set_data(self, data):
+        self.data = data
 
-    def __loop(self):
+    def loop(self):
         """
         Цикл обработки сообщений
         """
@@ -55,9 +51,6 @@ class Client:
             self.__handle_new_message(msg)
         self.__socket.close()
 
-    def set_text_field(self, text_field):
-        self.__text_field = text_field
-
     def __handle_new_message(self, message: MsgInfo):
         """
         Обработка нового сообщения
@@ -68,7 +61,7 @@ class Client:
             else:
                 self.__msgs_of_client.add(message.user, message.data)
 
-        if message.is_end and self.__text_field:
+        if message.is_end and self.data:
             self.print_message(message)
 
     def print_message(self, message: MsgInfo):
@@ -87,7 +80,7 @@ class Client:
             filepath = self.__msgs_of_client[message.user]
             os.rename(filepath, os.path.join(SAVING_DIR, message.data.decode()))
             text += "файл " + message.data.decode()
-        self.__text_field.appendPlainText(text)
+        self.data['text'] += text + "\n"
         del self.__msgs_of_client[message.user]
 
     def send_text(self, text: str):
@@ -103,7 +96,7 @@ class Client:
                 'type': 't'
             })
             i += self.__limit
-            self.__socket.sendto(data, self.__server_address)
+            self.__socket.sendto(data, self.server_address)
             time.sleep(TIMEOUT)
 
     def send_file(self, filepath: str, progressbar):
@@ -122,7 +115,7 @@ class Client:
                     'is_end': 0,
                     'type': 'f'
                 })
-                self.__socket.sendto(data, self.__server_address)
+                self.__socket.sendto(data, self.server_address)
                 time.sleep(TIMEOUT)
                 file_part = f.read(self.__limit)
                 sent_size += add_part_size
@@ -133,4 +126,4 @@ class Client:
             'is_end': 1,
             'type': 'h'
         })
-        self.__socket.sendto(data, self.__server_address)
+        self.__socket.sendto(data, self.server_address)

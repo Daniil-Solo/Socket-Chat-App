@@ -12,7 +12,7 @@ SAVING_DIR = os.path.join(os.getcwd(), './my_saves')
 
 
 class Client:
-    def __init__(self, username):
+    def __init__(self, username, lock):
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -23,6 +23,7 @@ class Client:
         self.__limit = calculate_limit(self.__username)
         self.connected = True
         self.data = None
+        self.lock = lock
 
     def get_server_address(self):
         """
@@ -80,7 +81,9 @@ class Client:
             filepath = self.__msgs_of_client[message.user]
             os.rename(filepath, os.path.join(SAVING_DIR, message.data.decode()))
             text += "файл " + message.data.decode()
-        self.data['text'] += text + "\n"
+        self.lock.acquire()
+        self.data['text'].append(text)
+        self.lock.release()
         del self.__msgs_of_client[message.user]
 
     def send_text(self, text: str):
@@ -119,7 +122,7 @@ class Client:
                 time.sleep(TIMEOUT)
                 file_part = f.read(self.__limit)
                 sent_size += add_part_size
-                progressbar.setValue(int(sent_size))
+                progressbar[0] = int(sent_size)
         data = from_dict_to_bytes({
             'user': self.__username,
             'data': os.path.basename(filepath),

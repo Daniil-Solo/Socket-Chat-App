@@ -15,10 +15,13 @@ from code.configs import BUF_SIZE
 from code.utils import from_bytes_to_message
 
 
+lock = threading.Lock()
+
+
 class ClientThread(QThread):
     data = {
         'status': 'ok',
-        'text': ""
+        'text': []
     }
 
     def __init__(self, parent):
@@ -44,6 +47,7 @@ class ChatApp(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
         super().__init__()
         self.setupUi(self)
         self.client = client
+        self.lock = lock
         self.file_path = None
         self.filename = ''
         self.send_msg_btn.clicked.connect(self.send_message)
@@ -64,9 +68,13 @@ class ChatApp(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             self.progress_widget.show()
         else:
             text = self.message_tb.text()
-            self.client.send_text(text)
-            self.message_tb.clear()
-            self.chat_tb.appendPlainText('Вы: ' + text)
+            try:
+                self.client.send_text(text)
+                self.message_tb.clear()
+                self.chat_tb.appendPlainText('Вы: ' + text)
+            except socket.error:
+                QMessageBox.about(self, "Ошибка", "Не удалось подключиться!")
+                self.close()
 
     def finish_file_sending(self):
         self.file_path = None
@@ -94,13 +102,30 @@ class ChatApp(QtWidgets.QMainWindow, main_window.Ui_MainWindow):
             QMessageBox.about(self, "Ошибка", "Не удалось подключиться!")
             self.close()
         else:
-            text = self.client_thread.data.get('text')
-            self.client_thread.data['text'] = ''
-            self.chat_tb.appendPlainText(text)
+            self.lock.acquire()
+            for message in self.client_thread.data.get('text'):
+                self.chat_tb.appendPlainText(message)
+            self.client_thread.data['text'] = []
+            self.lock.release()
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         self.client.connected = False
         event.accept()
+
+
+class ProgressThread(QThread):
+    progress_value = [0]
+
+    def __init__(self, parent):
+        QThread.__init__(self)
+        self.window = parent
+
+    def run(self):
+        try:
+            self.window.client.send_file(self.window.file_path, self.progress_value)
+        except socket.error:
+            self.progress_value[0] = -1
+            QMessageBox.about(self.window, "Ошибка", "Не удалось подключиться!")
 
 
 class ProgressWidget(QtWidgets.QWidget, progress_window.Ui_Form):
@@ -110,18 +135,23 @@ class ProgressWidget(QtWidgets.QWidget, progress_window.Ui_Form):
         self.chat = parent
         self.file_path = file_path
         self.client = client
-        self.cancel_loading_btn.clicked.connect(self.cancel_loading)
-        threading.Thread(target=self.progress_sending).start()
-
-    def progress_sending(self):
+        self.progress_thread = ProgressThread(self)
+        self.progress_thread.start()
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.set_data)
+        self.timer.start(100)
         self.progress.setValue(0)
-        self.client.send_file(self.file_path, self.progress)
-        self.chat.show()
-        self.chat.finish_file_sending()
-        self.close()
 
-    def cancel_loading(self):
-        pass
+    def set_data(self):
+        if self.progress_thread.progress_value[0] < 100:
+            self.progress.setValue(self.progress_thread.progress_value[0])
+        else:
+            self.timer.stop()
+            self.chat.show()
+            self.chat.finish_file_sending()
+            self.close()
+
+
 
 
 class LoginDialog(QtWidgets.QDialog, login_window.Ui_Dialog):
@@ -134,7 +164,7 @@ class LoginDialog(QtWidgets.QDialog, login_window.Ui_Dialog):
     def connect(self):
         login = self.login_tb.text()
         if login != '':
-            client = Client(login)
+            client = Client(login, lock)
             self.hide()
             self.chat = ChatApp(client)
             self.chat.show()

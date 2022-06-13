@@ -1,11 +1,10 @@
 import os.path
 import socket
-import threading
 import time
 
-from code.utils import from_dict_to_bytes, from_bytes_to_message, MsgInfo, calculate_limit
-from code.storage import Storage
-from code.configs import BUF_SIZE, KEY_PHRASE, SERVER_PORT, TIMEOUT
+from utils import from_dict_to_bytes, from_bytes_to_message, MsgInfo, calculate_limit
+from storage import Storage
+from configs import BUF_SIZE, KEY_PHRASE, SERVER_PORT, TIMEOUT
 
 
 SAVING_DIR = os.path.join(os.getcwd(), './my_saves')
@@ -107,7 +106,7 @@ class Client:
         Отправка файла
         """
         file_size = os.path.getsize(filepath)
-        add_part_size = self.__limit / file_size * 100
+        add_part_size = self.__limit / file_size * 100 / 2
         sent_size = 0
         with open(filepath, 'rb') as f:
             file_part = f.read(self.__limit)
@@ -130,3 +129,7 @@ class Client:
             'type': 'h'
         })
         self.__socket.sendto(data, self.server_address)
+        while sent_size < file_size:
+            sent_size += add_part_size
+            progressbar[0] = int(sent_size)
+            time.sleep(4*TIMEOUT)

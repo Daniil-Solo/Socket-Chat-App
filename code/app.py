@@ -10,9 +10,7 @@ from PyQt5.QtWidgets import QMessageBox
 import interface.main_window as main_window
 import interface.login_window as login_window
 import interface.progress_window as progress_window
-from code.client import Client
-from code.configs import BUF_SIZE
-from code.utils import from_bytes_to_message
+from client import Client
 
 
 lock = threading.Lock()
@@ -129,7 +127,7 @@ class ProgressThread(QThread):
 
 
 class ProgressWidget(QtWidgets.QWidget, progress_window.Ui_Form):
-    def __init__(self, parent: ChatApp, file_path: str, client: Client):
+    def __init__(self, parent: ChatApp, file_path: str, client):
         super().__init__()
         self.setupUi(self)
         self.chat = parent
@@ -150,8 +148,6 @@ class ProgressWidget(QtWidgets.QWidget, progress_window.Ui_Form):
             self.chat.show()
             self.chat.finish_file_sending()
             self.close()
-
-
 
 
 class LoginDialog(QtWidgets.QDialog, login_window.Ui_Dialog):

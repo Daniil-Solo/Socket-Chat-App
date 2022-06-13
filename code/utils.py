@@ -2,7 +2,7 @@ import json
 from collections import namedtuple
 
 # структура сообщения
-from code.configs import BUF_SIZE
+from configs import BUF_SIZE
 
 msg_structure = {
     "user": "",

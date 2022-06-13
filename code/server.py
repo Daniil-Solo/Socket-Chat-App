@@ -3,9 +3,9 @@ import socket
 import threading
 import time
 
-from code.utils import from_bytes_to_message, from_dict_to_bytes, MsgInfo, calculate_limit
-from code.storage import Storage
-from code.configs import BUF_SIZE, KEY_PHRASE, SERVER_PORT as PORT, TIMEOUT
+from utils import from_bytes_to_message, from_dict_to_bytes, MsgInfo, calculate_limit
+from storage import Storage
+from configs import BUF_SIZE, KEY_PHRASE, SERVER_PORT as PORT, TIMEOUT
 
 IP = ""
 SAVING_DIR = os.path.join(os.getcwd(), './saves')
@@ -39,7 +39,6 @@ class Server:
                     continue
                 time.sleep(TIMEOUT)
                 msg = from_bytes_to_message(data)
-                print('Сервер получил сообщение от', client, f'({msg.user})', ": ", msg.data[:5], msg.type, msg.is_end)
                 self.handle_new_message(msg, client)
 
     def handle_new_message(self, message: MsgInfo, client: tuple):

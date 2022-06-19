@@ -119,11 +119,12 @@ class ProgressThread(QThread):
         self.window = parent
 
     def run(self):
-        try:
-            self.window.client.send_file(self.window.file_path, self.progress_value)
-        except socket.error:
-            self.progress_value[0] = -1
-            QMessageBox.about(self.window, "Ошибка", "Не удалось подключиться!")
+        self.window.client.send_file(self.window.file_path, self.progress_value)
+        # try:
+        #     self.window.client.send_file(self.window.file_path, self.progress_value)
+        # except socket.error:
+        #     self.progress_value[0] = -1
+        #     QMessageBox.about(self.window, "Ошибка", "Не удалось подключиться!")
 
 
 class ProgressWidget(QtWidgets.QWidget, progress_window.Ui_Form):

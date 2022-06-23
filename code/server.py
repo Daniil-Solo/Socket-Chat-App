@@ -1,9 +1,7 @@
-import os
 import socket
 import threading
 import time
 
-from utils import calculate_limit
 from configs import BUF_SIZE, KEY_PHRASE, SERVER_PORT as PORT, TIMEOUT, SERVER_TCP_PORT
 
 IP = ""
@@ -68,20 +66,20 @@ class Server:
         username = self.clients[client][0]
         other_connections = [(self.clients[c][1], c) for c in self.clients.keys() if c != client]
 
-        if data[:1].decode() == 't':
-            new_data = (username + ': ').encode() + data[1:]
+        if data[:4].decode() == 'TEXT':
+            _, text = data.decode().split('#')
+            new_data = (username + ': ' + text).encode()
             self.send_data_to_connections(new_data, other_connections)
         elif data[:4].decode() == 'FILE':
-            file_size = int(data[4:].decode())
-            new_data = ('FILE#' + str(file_size) + '#' + username).encode()
+            _, file_size, filename = data.decode().split('#')
+            new_data = ('FILE#' + file_size + '#' + username + '#' + filename).encode()
             self.send_data_to_connections(new_data, other_connections)
             total = 0
-            while total != file_size:
+            file_size = int(file_size)
+            while total < file_size:
                 new_data = connection.recv(BUF_SIZE)
                 total = total + len(new_data)
                 self.send_data_to_connections(new_data, other_connections)
-            file_name = connection.recv(BUF_SIZE)
-            self.send_data_to_connections(file_name, other_connections)
 
     def send_data_to_connections(self, data, connections):
         """

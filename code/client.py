@@ -7,7 +7,7 @@ from storage import Storage
 from configs import BUF_SIZE, KEY_PHRASE, SERVER_PORT, TIMEOUT, SERVER_TCP_PORT
 
 
-SAVING_DIR = os.path.join(os.getcwd(), './my_saves')
+SAVING_DIR = os.path.join(os.getcwd(), 'my_saves')
 
 
 class Client:
@@ -32,6 +32,7 @@ class Client:
         Получение адреса сервера
         """
         self.__socket.sendto(KEY_PHRASE.encode(), ('<broadcast>', SERVER_PORT))
+        time.sleep(TIMEOUT * 10)
         while True:
             data, server = self.__socket.recvfrom(BUF_SIZE)
             if data:
@@ -63,25 +64,19 @@ class Client:
         """
         message = data.decode()
         if message.startswith('FILE'):
-            _, file_size, username = message.split('#')
+            _, file_size, username, file_name = message.split('#')
             file_size = int(file_size)
+            file_path = os.path.join(SAVING_DIR, file_name)
             total = 0
-            data = self.server_socket.recv(BUF_SIZE)
-            total = total + len(data)
-            self.__msgs_of_client[username] = data
-            while total != file_size:
-                data = self.server_socket.recv(BUF_SIZE)
-                total = total + len(data)
-                self.__msgs_of_client.add(username, data)
-
-            filename = self.server_socket.recv(BUF_SIZE).decode()
-            filepath = self.__msgs_of_client[username]
             try:
-                os.rename(filepath, os.path.join(SAVING_DIR, filename))
-                del self.__msgs_of_client[username]
+                with open(file_path, 'wb') as f:
+                    while total < file_size:
+                        data = self.server_socket.recv(BUF_SIZE)
+                        total = total + len(data)
+                        f.write(data)
             except FileExistsError as ex:
                 print(ex)
-            self.print_message(username + ' отправил файл ' + filename)
+            self.print_message(username + ' отправил файл ' + file_name)
         else:
             self.print_message(data.decode())
 
@@ -97,7 +92,7 @@ class Client:
         """
         Отправка текстового сообщения
         """
-        data = ('t' + text).encode()
+        data = ('TEXT' + '#' + text).encode()
         self.server_socket.send(data)
 
     def send_file(self, filepath: str, progressbar):
@@ -107,8 +102,9 @@ class Client:
         file_size = os.path.getsize(filepath)
         add_part_size = self.__limit / file_size * 100
         sent_size = 0
-        data = ('FILE' + str(file_size)).encode()
+        data = ('FILE' + '#' + str(file_size) + '#' + os.path.basename(filepath)).encode()
         self.server_socket.send(data)
+        time.sleep(TIMEOUT)
         with open(filepath, 'rb') as f:
             file_part = f.read(self.__limit)
             while file_part:
@@ -117,5 +113,3 @@ class Client:
                 file_part = f.read(self.__limit)
                 sent_size += add_part_size
                 progressbar[0] = int(sent_size)
-        data = (os.path.basename(filepath)).encode()
-        self.server_socket.send(data)

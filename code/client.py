@@ -4,7 +4,7 @@ import time
 
 from utils import calculate_limit
 from storage import Storage
-from configs import BUF_SIZE, KEY_PHRASE, SERVER_PORT, TIMEOUT, SERVER_TCP_PORT
+from configs import BUF_SIZE, KEY_PHRASE, SERVER_PORT, TIMEOUT, TIMEOUT_UDP, SERVER_TCP_PORT
 
 
 SAVING_DIR = os.path.join(os.getcwd(), 'my_saves')
@@ -32,7 +32,7 @@ class Client:
         Получение адреса сервера
         """
         self.__socket.sendto(KEY_PHRASE.encode(), ('<broadcast>', SERVER_PORT))
-        time.sleep(TIMEOUT * 10)
+        time.sleep(TIMEOUT_UDP)
         while True:
             data, server = self.__socket.recvfrom(BUF_SIZE)
             if data:

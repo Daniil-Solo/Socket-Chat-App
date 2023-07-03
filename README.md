@@ -22,3 +22,10 @@ sudo apt-get install qttools5-dev-tools
 ```bash
 pip install -r requirements.txt
 ```
+
+## Демонстрация работы приложения
+![](https://github.com/Daniil-Solo/Socket-Chat-App/blob/main/images/login.jpg)
+
+![](https://github.com/Daniil-Solo/Socket-Chat-App/blob/main/images/chat.jpg)
+
+![](https://github.com/Daniil-Solo/Socket-Chat-App/blob/main/images/file_sending.jpg)
